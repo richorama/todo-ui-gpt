@@ -132,10 +132,11 @@ const Chat = () => {
     setIsLoading(false);
   };
 
-  useEffect(
-    () => chatMessageStreamEnd.current?.scrollIntoView({ behavior: "smooth" }),
-    [showLoadingMessage]
-  );
+  const scrollToBottom = () => {
+    chatMessageStreamEnd.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(scrollToBottom, [showLoadingMessage, setAnswers]);
 
   const onShowCitation = (citation: Citation) => {
     setActiveCitation([
@@ -197,16 +198,14 @@ const Chat = () => {
         </Stack>
       ) : (
         <Stack horizontal className={styles.chatRoot}>
-          <div
-            style={{ width: "50%", height: "100%" }}
-          >
+          <div style={{ width: "50%", height: "100%" }}>
             <canvas
               ref={canvasRef}
               width="500"
               height="300"
               style={{
                 width: "100%",
-                background: "white",
+                background: "#eee",
                 border: "30px solid red",
                 borderRadius: "30px",
               }}
@@ -409,11 +408,11 @@ function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-
 async function draw(canvas: any, points: [[number, number]]) {
   const ctx = canvas.getContext("2d");
 
   ctx.clearRect(0, 0, canvas.width, canvas.height);
+
   ctx.beginPath();
   ctx.strokeStyle = "black";
   let position = [250, 150];
@@ -425,7 +424,6 @@ async function draw(canvas: any, points: [[number, number]]) {
     ctx.stroke();
     await sleep(200);
   }
-  
 }
 
 function getTime() {

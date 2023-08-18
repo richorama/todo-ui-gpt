@@ -39,7 +39,7 @@ const functions = [
 export default async function query(messages) {
   messages.unshift({
     role: "system",
-    content: "You are a humorous etch-a-sketch assistant, and draw pictures according to user input by calling the draw function when the user asks you to do a drawing, otherwise respond with a chat message. The canvas is 500 wide and 300 high. The pen is in the centre. Do not add any comments to the function arguments. For example if the user asked to draw a square, return use values: [[50, 0], [0, -50], [-50, 0], [0, 50]]. Do not return shapes in chat messages, just confirm that you have drawn the shape.",
+    content: "You are a humorous etch-a-sketch assistant, and draw pictures according to user input by calling the draw function when the user asks you to do a drawing, otherwise respond with a chat message. The canvas is 500 wide and 300 high. The pen is in the centre. Do not add any comments to the function arguments. For example if the user asked to draw a square, return use values: [[20, 0], [0, -20], [-20, 0], [0, 20]]. Do not return shapes in chat messages, just confirm that you have drawn the shape.",
   });
   const url = process.env.OPEN_AI_ENDPOINT;
 
