@@ -405,7 +405,12 @@ async function evalFunction(canvas: any, functionCall: FunctionCall) {
   }
 }
 
-function draw(canvas: any, points: [[number, number]]) {
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+
+async function draw(canvas: any, points: [[number, number]]) {
   const ctx = canvas.getContext("2d");
 
   ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -417,8 +422,10 @@ function draw(canvas: any, points: [[number, number]]) {
     position[0] += point[0];
     position[1] += point[1];
     ctx.lineTo(position[0], position[1]);
+    ctx.stroke();
+    await sleep(200);
   }
-  ctx.stroke();
+  
 }
 
 function getTime() {
