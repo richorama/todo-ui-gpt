@@ -1,5 +1,7 @@
 # Etch-a-Sketch Copilot Demo
 
+![](screenshot.png)
+
 ## Motivation
 
 A very simple demo of how to use Copilot to generate code for a simple Etch-a-Sketch game.
