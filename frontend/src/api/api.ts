@@ -3,7 +3,7 @@ import { UserInfo, ConversationRequest, ChatResponse } from "./models";
 export async function conversationApi(
   requestBody: ConversationRequest
 ): Promise<ChatResponse> {
-  const response = await fetch("http://localhost:3000/conversation", {
+  const response = await fetch("/conversation", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
