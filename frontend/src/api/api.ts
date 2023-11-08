@@ -14,13 +14,3 @@ export async function conversationApi(
   return await response.json();
 }
 
-export async function getUserInfo(): Promise<UserInfo[]> {
-  const response = await fetch("/.auth/me");
-  if (!response.ok) {
-    console.log("No identity provider found. Access to chat will be blocked.");
-    return [];
-  }
-
-  const payload = await response.json();
-  return payload;
-}

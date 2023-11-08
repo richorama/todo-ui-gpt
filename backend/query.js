@@ -5,42 +5,37 @@ dotenv.config();
 
 const functions = [
   {
-    name: "draw",
-    description: "Draws lines on an etch-a-sketch",
+    name: "add_todo",
+    description: "Adds a new todo item to the list",
     parameters: {
       type: "object",
       properties: {
-        points: {
-          description:
-            "a javascript array of points, each point is a 2-element javascript array of the relative movement required in the horizontal and vertical directions respectively. These numbers can be positive or negative.",
-          type: "array",
-          items:{
-            type: "array",
-            items: {
-              type: "number"
-            }
-          }
+        description: {
+          type: "string",
+          description: "The description of the todo item",
         },
       },
-      required: ["points"],
+      required: ["description"],
     },
   },
   {
-    name: "getTime",
-    description: "retrieve the current date and time for the user",
+    name: "remove_todo",
+    description: "Removes a todo item by index",
     parameters: {
       type: "object",
-      properties: { },
-      required: [],
+      properties: {
+        index: {
+          type: "integer",
+          description: "The index of the todo item to remove, this starts at 1",
+        },
+      },
+      required: ["index"],
     },
-  },  
-];
+  },
+]
 
 export default async function query(messages) {
-  messages.unshift({
-    role: "system",
-    content: "You are a humorous etch-a-sketch assistant, and draw pictures according to user input by calling the draw function when the user asks you to do a drawing, otherwise respond with a chat message. The canvas is 500 wide and 300 high. The pen is in the centre. Do not add any comments to the function arguments. For example if the user asked to draw a square, return use values: [[20, 0], [0, -20], [-20, 0], [0, 20]]. Do not return shapes in chat messages, just confirm that you have drawn the shape.",
-  });
+  
   const url = process.env.OPEN_AI_ENDPOINT;
 
   const options = {

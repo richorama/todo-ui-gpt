@@ -43,37 +43,52 @@ const Chat = () => {
     >();
   const [isCitationPanelOpen, setIsCitationPanelOpen] =
     useState<boolean>(false);
-  const [answers, setAnswers] = useState<ChatMessage[]>([]);
-  const canvasRef = useRef(null);
+  const [todos, setTodos] = useState<string[]>([
+    "Buy some milk",
+    "Put the bins out",
+    "Walk the dog",
+  ]);
 
-  const clearCanvas = (canvasRef: any) => {
-    const ctx = canvasRef.current.getContext("2d");
-    ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+  const writeTodos = () => todos.map((x, i) => `${i + 1}. ${x}`).join("\n");
+
+  const evalFunction = async (functionCall: FunctionCall) => {
+    const args = JSON.parse(functionCall.arguments);
+    switch (functionCall.name) {
+      case "add_todo":
+        setTodos((prev) => [...prev, args.description]);
+        return `The ${
+          args.description
+        } item was added successfully. The todos are now:\n---\n${writeTodos()}}`;
+      case "remove_todo":
+        setTodos((prev) => prev.filter((x, index) => index !== args.index - 1));
+        return `The ${
+          args.index
+        } todo ${args.index} was removed successfully. The todos are now:\n---\n${writeTodos()}}`;
+    }
   };
+
+  const [answers, setAnswers] = useState<ChatMessage[]>([
+    {
+      role: "system",
+      content: `You are a super positive a AI assistant that helps people maintain a todo list and gets things done. You can respond in markdown and use emojis. You can add and remove items on the list by calling the add_todo and remove_todo functions.\nThese are the initial todo items:\n---\n${writeTodos()}`,
+    },
+  ]);
 
   const makeRequest = async (messages: ChatMessage[]) => {
     let result = {} as ChatResponse;
+
     try {
       const result = await conversationApi({
         messages: messages.filter((x) => x.role !== "error"),
       });
-      console.log(result);
 
       const message = result.choices[0].message;
       setAnswers([...messages, message]);
 
       if (message.function_call) {
         // the chat results requires us to go and call function
-        const functionContent = await evalFunction(
-          canvasRef.current,
-          message.function_call
-        );
-        const functionResponse: ChatMessage = {
-          role: "function",
-          content: functionContent,
-          name: message.function_call.name,
-        };
-        const nextAnswers = [...messages, message, functionResponse];
+        message.content = await evalFunction(message.function_call);
+        const nextAnswers = [...messages, message];
         setAnswers(nextAnswers);
         makeRequest(nextAnswers);
         return;
@@ -100,6 +115,7 @@ const Chat = () => {
     } finally {
       setIsLoading(false);
       setShowLoadingMessage(false);
+      setTimeout(scrollToBottom, 100)
     }
   };
 
@@ -117,14 +133,15 @@ const Chat = () => {
     const nextAnswers = [...answers, userMessage];
 
     makeRequest(nextAnswers);
-    //setAnswers(nextAnswers);
   };
 
   const clearChat = () => {
     lastQuestionRef.current = "";
     setActiveCitation(undefined);
-    setAnswers([]);
-    clearCanvas(canvasRef);
+    setAnswers([   {
+      role: "system",
+      content: `You are a super positive a AI assistant that helps people maintain a todo list and gets things done. You can respond in markdown and use emojis. You can add and remove items on the list by calling the add_todo and remove_todo functions.\nThese are the initial todo items:\n---\n${writeTodos()}`,
+    }]);
   };
 
   const stopGenerating = () => {
@@ -199,17 +216,24 @@ const Chat = () => {
       ) : (
         <Stack horizontal className={styles.chatRoot}>
           <div style={{ width: "50%", height: "100%" }}>
-            <canvas
-              ref={canvasRef}
-              width="500"
-              height="300"
-              style={{
-                width: "100%",
-                background: "#eee",
-                border: "30px solid red",
-                borderRadius: "30px",
-              }}
-            />
+            <Stack
+              className={styles.chatContainer}
+              style={{ alignItems: "inherit", height: "100%" }}
+            >
+              {(todos || []).map((todo) => (
+                <div
+                  style={{
+                    alignItems: "left",
+                    padding: 20,
+                    fontSize: 20,
+                    borderBottom: "1px solid #ddd",
+                  }}
+                  key={todo}
+                >
+                  {todo}
+                </div>
+              ))}
+            </Stack>
           </div>
           <div className={styles.chatContainer}>
             {!lastQuestionRef.current ? (
@@ -230,9 +254,27 @@ const Chat = () => {
                 style={{ marginBottom: isLoading ? "40px" : "0px" }}
                 role="log"
               >
-                {answers.map((answer, index) => (
+                {answers.map((answer) => (
                   <>
-                    {answer.role === "user" ? (
+                    {answer.function_call ? (
+                      <div className={styles.chatMessageGpt}>
+                        <div
+                          className={styles.chatMessageUserMessage}
+                          style={{ background: "whitesmoke" }}
+                        >
+                          <i>Function called:</i>
+                          <br />
+                          <pre>
+                            {answer.function_call.name}("
+                            {JSON.parse(answer.function_call.arguments || "{}")
+                              .description ||
+                              JSON.parse(answer.function_call.arguments || "{}")
+                                .index}
+                            ")
+                          </pre>
+                        </div>
+                      </div>
+                    ) : answer.role === "user" ? (
                       <div className={styles.chatMessageUser} tabIndex={0}>
                         <div className={styles.chatMessageUserMessage}>
                           {answer.content}
@@ -247,15 +289,6 @@ const Chat = () => {
                           }}
                           onCitationClicked={(c) => onShowCitation(c)}
                         />
-                      </div>
-                    ) : answer.role === "function" ? (
-                      <div className={styles.chatMessageGpt}>
-                        <div
-                          className={styles.chatMessageUserMessage}
-                          style={{ background: "white" }}
-                        >
-                          <i>{answer.name} function called</i>
-                        </div>
                       </div>
                     ) : answer.role === "error" ? (
                       <div className={styles.chatMessageError}>
@@ -352,39 +385,6 @@ const Chat = () => {
               />
             </Stack>
           </div>
-          {answers.length > 0 && isCitationPanelOpen && activeCitation && (
-            <Stack.Item
-              className={styles.citationPanel}
-              tabIndex={0}
-              role="tabpanel"
-              aria-label="Citations Panel"
-            >
-              <Stack
-                horizontal
-                className={styles.citationPanelHeaderContainer}
-                horizontalAlign="space-between"
-                verticalAlign="center"
-              >
-                <span className={styles.citationPanelHeader}>Citations</span>
-                <DismissRegular
-                  className={styles.citationPanelDismiss}
-                  onClick={() => setIsCitationPanelOpen(false)}
-                />
-              </Stack>
-              <h5 className={styles.citationPanelTitle} tabIndex={0}>
-                {activeCitation[2]}
-              </h5>
-              <div tabIndex={0}>
-                <ReactMarkdown
-                  linkTarget="_blank"
-                  className={styles.citationPanelContent}
-                  children={activeCitation[0]}
-                  remarkPlugins={[remarkGfm]}
-                  rehypePlugins={[rehypeRaw]}
-                />
-              </div>
-            </Stack.Item>
-          )}
         </Stack>
       )}
     </div>
@@ -392,40 +392,3 @@ const Chat = () => {
 };
 
 export default Chat;
-
-async function evalFunction(canvas: any, functionCall: FunctionCall) {
-  const args = JSON.parse(functionCall.arguments);
-  switch (functionCall.name) {
-    case "draw":
-      draw(canvas, args.points);
-      return "The function draw was called successfully.";
-    case "getTime":
-      return getTime();
-  }
-}
-
-function sleep(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-async function draw(canvas: any, points: [[number, number]]) {
-  const ctx = canvas.getContext("2d");
-
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-  ctx.beginPath();
-  ctx.strokeStyle = "black";
-  let position = [250, 150];
-  ctx.moveTo(position[0], position[1]);
-  for (const point of points) {
-    position[0] += point[0];
-    position[1] += point[1];
-    ctx.lineTo(position[0], position[1]);
-    ctx.stroke();
-    await sleep(200);
-  }
-}
-
-function getTime() {
-  return new Date().toString();
-}
