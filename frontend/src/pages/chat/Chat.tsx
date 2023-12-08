@@ -245,7 +245,7 @@ const Chat = () => {
                 />
                 <h1 className={styles.chatEmptyStateTitle}>Start chatting</h1>
                 <h2 className={styles.chatEmptyStateSubtitle}>
-                  This chatbot is configured to answer your questions
+                  🤖 This chatbot is configured to help you be productive!
                 </h2>
               </Stack>
             ) : (
